@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bundespolizeipräsidium Nord Köln</title>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --text:#e5e7eb;
+      --accent:#22d3ee; --accent-2:#a78bfa; --danger:#ef4444; --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .app{max-width:1100px;margin:auto;padding:24px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+    .title{font-size:clamp(20px,2.8vw,32px);font-weight:800}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button,.btn{border:0;border-radius:14px;padding:10px 14px;background:var(--muted);color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:transform .06s ease,filter .2s ease}
+    button:hover{filter:brightness(1.07)} button:active{transform:translateY(1px)}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b1020;font-weight:700}
+    .btn-danger{background:linear-gradient(135deg,#f87171,var(--danger))}
+    .layout{display:grid;grid-template-columns:2.2fr 1fr;gap:16px}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}}
+    .card{background:rgba(255,255,255,.04);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius)}
+
+    .calendar{padding:16px}
+    .cal-head{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;margin-bottom:8px}
+    .month{font-size:20px;font-weight:700;text-align:center}
+    .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:12px;opacity:.8;margin-bottom:6px}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .cell{min-height:100px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px}
+    .cell.muted{opacity:.45}
+    .cell .d{font-size:12px;opacity:.8}
+    .cell.today{outline:2px solid var(--accent); box-shadow:0 0 0 3px rgba(34,211,238,.25) inset; background:rgba(255,255,255,.06)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+
+    .list{padding:16px}
+    .list h3{margin:0 0 8px 0}
+    .list .item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);margin-bottom:8px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .muted-text{opacity:.75;font-size:12px}
+
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    input, select, textarea{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;width:100%}
+    input[type="color"]{padding:2px;height:36px}
+
+    dialog{border:0;border-radius:18px;background:rgba(17,24,39,.96);color:var(--text);width:min(620px,92vw);box-shadow:var(--shadow)}
+    dialog::backdrop{background:rgba(0,0,0,.6)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .modal-body{padding:16px;display:grid;gap:12px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:640px){.grid-2{grid-template-columns:1fr}}
+    .modal-actions{display:flex;justify-content:space-between;gap:8px;padding:16px;border-top:1px solid rgba(255,255,255,.08)}
+
+    .pill{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.12)}
+    .status-geplant{background:rgba(59,130,246,.25)}
+    .status-zugesagt{background:rgba(34,197,94,.25)}
+
+    /* Dunkle Dropdowns (Filter + Dialog) */
+    select {appearance:none;-webkit-appearance:none;-moz-appearance:none;background:rgba(255,255,255,.06) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white'><path d='M4 6l4 4 4-4z'/></svg>") no-repeat right 12px center;background-size:12px;color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 36px 10px 12px;font-size:14px;cursor:pointer;box-shadow:var(--shadow);transition:filter .2s}
+    select:hover{filter:brightness(1.1)}
+
+    /* ---- Custom Confirm (für Google Sites) ---- */
+    #confirmOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+    #confirmBox{width:min(420px,92vw);background:rgba(17,24,39,.97);border:1px solid rgba(255,255,255,.12);border-radius:16px;color:var(--text);box-shadow:var(--shadow)}
+    #confirmBox .head{padding:14px 16px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)}
+    #confirmBox .body{padding:16px}
+    #confirmBox .actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08)}
+    #confirmBox button{border:0;border-radius:12px;padding:10px 14px;cursor:pointer}
+    #confirmCancel{background:var(--muted);color:var(--text)}
+    #confirmOk{background:linear-gradient(135deg,#f87171,var(--danger));color:#0b1020;font-weight:700}
+
+    dialog select,
+.form-select,
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background:
+    rgba(255,255,255,.06)
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white'><path d='M4 6l4 4 4-4z'/></svg>")
+    no-repeat right 12px center;
+  background-size: 12px;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 10px 36px 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: filter .2s ease, box-shadow .2s ease;
+}
+dialog select:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(34,211,238,.25);
+}
+dialog option,
+select option {
+  color: var(--text);
+  background-color: #111827; /* dunkles Dropdown-Menü */
+}
+
+/* confirmDialog nutzt dieselben Dialog-Styles; Sicherheitsnetz: ganz oben */
+#confirmDialog { z-index: 99999; }
+
+
+  
+/* === Top-Left Logo + Title Bar (Bundespolizei) === */
+.govbar{
+  position: sticky; top: 0; z-index: 500;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, rgba(11,16,32,.85), rgba(15,23,42,.85));
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+}
+.govbar .gov-logo{
+  display:inline-flex; align-items:center; justify-content:center;
+  width: 34px; height: 34px;
+  border-radius: 6px;
+  background: #000;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+.govbar .gov-logo img{ width:100%; height:100%; object-fit: contain; }
+.govbar .gov-title{
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #e5e7eb;
+  text-shadow: 0 1px 0 rgba(0,0,0,.4);
+}
+
+/* give the main app a little breathing room below the bar */
+.app{ margin-top: 8px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Bundespolizei Kopfzeile -->
+  <div class="govbar">
+    <span class="gov-logo">
+      <img src="Federal_Police_Patch.svg.png" alt="Bundespolizei Wappen">
+    </span>
+    <span class="gov-title">Bundespolizeipräsidium Nord Köln</span>
+  </div>
+
+  <div class="app">
+    <header>
+      <div class="title">📅 DirZA 2 (Personalmanagment)-Kalender</div>
+      <div class="toolbar">
+        <button id="addQuick" class="btn-accent">+ Neuer Termin</button>
+        <button id="exportBtn">Export</button>
+        <label class="btn" for="importFile">Import</label>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+    </header>
+
+    <div class="filters card" style="padding:12px 16px;align-items:center;justify-content:space-between">
+      <div style="flex:1;display:flex;gap:8px;flex-wrap:wrap">
+        <input id="search" placeholder="Suche: Bearbeiter, Rolle, Notizen ..." />
+        <select id="typeFilter">
+          <option value="">Alle Arten</option>
+          <option>Vorstellungsgespräch</option>
+          <option>Einstellung</option>
+          <option>Sonstiges</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">Alle Status</option>
+          <option value="geplant">Geplant</option>
+          <option value="zugesagt">Zugesagt</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="calendar card">
+        <div class="cal-head">
+          <button id="prevMonth">◀</button>
+          <div class="month" id="monthLabel">Monat</div>
+          <button id="nextMonth">▶</button>
+        </div>
+        <div class="week"><div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div></div>
+        <div class="grid" id="calendarGrid"></div>
+      </section>
+      <aside class="list card">
+        <h3>⏭️ Nächste Termine</h3>
+        <div id="upcoming"></div>
+      </aside>
+    </div>
+
+    <p class="muted-text" style="text-align:center">Rechtlicher Hinweis / Disclaimer</p>
+    <p class="muted-text" style="text-align:center">Die auf dieser Website sowie im digitalen Kalender dargestellten Inhalte dienen ausschließlich der Nutzung im Rahmen des GTA V / FiveM Roleplay (RP).
+Alle dargestellten Daten, Termine, Bezeichnungen und Ereignisse sind fiktiv und haben keinen Bezug zu realen Personen, Behörden, Institutionen oder tatsächlichen Vorgängen.
+Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereignissen sind rein zufällig und nicht beabsichtigt.</p>
+    <p class="muted-text" style="text-align:center">Alle eingegeben daten werden unverschlüsselt in einer Google Sheetstabelle abgelegt.</p>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="eventModal">
+    <form id="eventForm">
+      <div class="modal-head">
+        <div style="font-weight:700">Termin</div>
+        <button id="closeModal" type="button" class="btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2">
+          <div>
+            <label>Datum
+              <input type="date" id="date" name="date" required />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>Start
+              <input type="time" id="start" name="start" />
+            </label>
+            <label>Ende
+              <input type="time" id="end" name="end" />
+            </label>
+          </div>
+        </div>
+        <div class="grid-2">
+          <label>Bearbeiter
+            <input id="company" name="company" placeholder="z.B. Dave Walther" required />
+          </label>
+          <label>Rolle / Stelle
+            <input id="role" name="role" placeholder="z.B. Polizeimeisteranwärter" />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>Art
+            <select id="type" name="type">
+              <option>Vorstellungsgespräch</option>
+              <option>Einstellung</option>
+              <option>Sonstiges</option>
+            </select>
+          </label>
+          <label>Status
+            <select id="status" name="status">
+              <option value="geplant">Geplant</option>
+              <option value="zugesagt">Zugesagt</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>Farbe
+            <input type="color" id="color" name="color" value="#22d3ee" />
+          </label>
+          <label>Ticket
+            <input id="location" name="location" placeholder="z.B. Ticket Name" />
+          </label>
+        </div>
+        <label>Notizen
+          <textarea id="notes" name="notes" rows="3" placeholder="Notizen ..."></textarea>
+        </label>
+        <input type="hidden" id="eventId" name="eventId" />
+      </div>
+      <div class="modal-actions">
+        <div style="display:flex;gap:8px">
+          <button id="deleteBtn" type="button" class="btn-danger">Löschen</button>
+        </div>
+        <button id="saveBtn" type="submit" class="btn-accent">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Custom Confirm (Google Sites kompatibel) -->
+<dialog id="confirmDialog">
+  <div class="modal-head">
+    <div id="confirmTitle" style="font-weight:700">Bestätigen</div>
+  </div>
+  <div class="modal-body">
+    <div id="confirmMessage">Soll dieser Eintrag wirklich gelöscht werden?</div>
+  </div>
+  <div class="modal-actions">
+    <button id="confirmCancel" type="button" class="btn">Abbrechen</button>
+    <button id="confirmOk" type="button" class="btn-danger">Löschen</button>
+  </div>
+</dialog>
+
+  <script>
+  // === Backend ===
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwcYe5kSCPKr_qwazF0I5OwmVmArBvVTyz6_4XQrUeoAhJbnVwDD7n9TEX_enyWIa855Q/exec';
+
+  async function apiList(){ const r=await fetch(`${API_URL}?action=list`); const j=await r.json(); if(!j.ok) throw new Error(j.error||'API list failed'); return j.data||[]; }
+  async function apiSave(event){ const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'save',event})}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'API save failed'); return j.id; }
+  async function apiDelete(id){ const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'delete',event:{id}})}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'API delete failed'); return true; }
+
+  // === Utils & State ===
+  const $ = s => document.querySelector(s);
+
+  // Lokales YYYY-MM-DD (ohne UTC-Verschiebung)
+  function toKey(d){ if(!d) return ''; const dt=new Date(d); const y=dt.getFullYear(); const m=String(dt.getMonth()+1).padStart(2,'0'); const da=String(dt.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+
+  // Alles -> HH:mm (robust)
+  function toHmAny(v){
+    if (v === null || v === undefined || v === '') return '';
+    if (typeof v === 'number'){
+      const dayMs=86400000; const ms=Math.round((v%1)*dayMs); const d=new Date(ms);
+      const hh=String(d.getUTCHours()).padStart(2,'0'); const mm=String(d.getUTCMinutes()).padStart(2,'0'); return `${hh}:${mm}`;
+    }
+    const s=String(v).trim(); let m=s.match(/^(\d{1,2})[:.](\d{2})$/); if(m) return m[1].padStart(2,'0')+':'+m[2];
+    m=s.match(/^(\d{1,2}):(\d{2}):\d{2}$/); if(m) return m[1].padStart(2,'0')+':'+m[2];
+    if (s.includes('T')){ const d=new Date(s); if(!isNaN(d)){ const hh=String(d.getHours()).padStart(2,'0'); const mm=String(d.getMinutes()).padStart(2,'0'); return `${hh}:${mm}`; } }
+    return '';
+  }
+
+  // Custom Confirm + Notify (statt window.confirm/alert → Sites-kompatibel)
+// Bestätigen mit echtem <dialog> → liegt sicher vor dem Event-Dialog
+function confirmAsync(message, title='Bestätigen'){
+  const dlg = document.getElementById('confirmDialog');
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+
+  return new Promise(resolve=>{
+    const ok = document.getElementById('confirmOk');
+    const cancel = document.getElementById('confirmCancel');
+
+    const cleanup = (result)=>{
+      ok.removeEventListener('click', okH);
+      cancel.removeEventListener('click', cancelH);
+      // Falls geöffnet, schließen
+      if (typeof dlg.close === 'function') { try { dlg.close(); } catch(_){} }
+      resolve(result);
+    };
+    const okH = ()=> cleanup(true);
+    const cancelH = ()=> cleanup(false);
+
+    ok.addEventListener('click', okH);
+    cancel.addEventListener('click', cancelH);
+
+    // showModal stackt diesen Dialog über alle anderen (inkl. eventModal)
+    if (typeof dlg.showModal === 'function') {
+      dlg.showModal();
+    } else {
+      // Fallback für alte Browser: als normales Fenster
+      dlg.show && dlg.show();
+    }
+  });
+}
+
+  function notify(msg){
+    console.log(msg);
+    const n=document.createElement('div');
+    n.textContent=msg;
+    n.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:99999';
+    document.body.appendChild(n); setTimeout(()=>n.remove(),2200);
+  }
+
+  const state = { y:new Date().getFullYear(), m:new Date().getMonth(), events:[], filters:{ q:'', type:'', status:'' } };
+
+  // Optionales Sicherheitsnetz: fehlende IDs nachtragen (falls alte Daten ohne id vorhanden sind)
+  async function ensureIds(events){
+    const out=[]; for(const ev of events){
+      if(!ev.id || String(ev.id).trim()===''){ const id=await apiSave({...ev,id:''}); out.push({...ev,id}); }
+      else out.push(ev);
+    } return out;
+  }
+
+  async function bootstrap(){
+    try{
+      const data = await apiList();
+      const normalized = data.map(e => ({ ...e, date:toKey(e.date||''), start:toHmAny(e.start), end:toHmAny(e.end) }));
+      // ← Wenn nötig aktivieren:
+      // state.events = await ensureIds(normalized);
+      state.events = normalized;
+      render();
+    }catch(err){
+      console.error(err);
+      notify('Konnte Daten nicht vom Server laden.');
+    }
+  }
+
+  // Rendering
+  const monthLabel = document.getElementById('monthLabel');
+  const grid = document.getElementById('calendarGrid');
+
+  function setMonth(y,m){ state.y=y; state.m=m; render(); }
+
+  function render(){
+    const {y,m} = state;
+    monthLabel.textContent = new Date(y,m,1).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+
+    grid.innerHTML='';
+    const first = new Date(y,m,1);
+    const startIdx = (first.getDay()+6)%7;
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const prevDays = new Date(y,m,0).getDate();
+
+    const cells=[];
+    for(let i=startIdx-1;i>=0;i--){ const d=new Date(y,m-1,prevDays-i); cells.push({d,muted:true}); }
+    for(let i=1;i<=daysInMonth;i++){ cells.push({d:new Date(y,m,i),muted:false}); }
+    while(cells.length%7!==0 || cells.length<42){ const last=cells[cells.length-1].d; const d=new Date(last); d.setDate(d.getDate()+1); cells.push({d,muted:true}); }
+
+    const todayKey = toKey(new Date());
+    const filtered = getFilteredEvents();
+
+    for(const c of cells){
+      const cell = document.createElement('div');
+      const dayKey = toKey(c.d);
+      cell.className = 'cell' + (c.muted?' muted':'') + (dayKey===todayKey ? ' today' : '');
+      const dLabel = document.createElement('div'); dLabel.className='d'; dLabel.textContent = c.d.getDate(); cell.appendChild(dLabel);
+
+      const dayEvents = filtered.filter(e=>e.date===dayKey).sort((a,b)=> (toHmAny(a.start)||'').localeCompare(toHmAny(b.start)||''));
+      for(const ev of dayEvents){
+        const badge = document.createElement('div');
+        badge.className='badge';
+        badge.style.borderLeft = `6px solid ${ev.color||'#22d3ee'}`;
+        badge.title = `${ev.type} @ ${toHmAny(ev.start)} ${ev.company ? '• '+ev.company : ''}`;
+        badge.innerHTML = `<span style="font-weight:700">${ev.company||''}</span> <span class="muted-text">${ev.type? '· '+ev.type:''} ${toHmAny(ev.start)? '· '+toHmAny(ev.start):''}</span>`;
+        badge.addEventListener('click',()=> openModal(ev));
+        cell.appendChild(badge);
+      }
+
+      cell.addEventListener('dblclick',()=> openModal({date:dayKey,start:'09:00',type:'Vorstellungsgespräch',status:'geplant',color:'#22d3ee'}));
+      grid.appendChild(cell);
+    }
+
+    renderUpcoming();
+  }
+
+  function getFilteredEvents(){
+    const {q,type,status} = state.filters;
+    const ql = q.trim().toLowerCase();
+    return state.events.filter(e=>{
+      const okQ = !ql || [e.company,e.role,e.notes,e.location,e.type].filter(Boolean).some(v=>String(v).toLowerCase().includes(ql));
+      const okT = !type || e.type===type;
+      const okS = !status || e.status===status;
+      return okQ && okT && okS;
+    });
+  }
+
+  function renderUpcoming(){
+    const box = document.getElementById('upcoming');
+    const now = new Date(); const horizon = new Date(); horizon.setDate(horizon.getDate()+60);
+    const items = getFilteredEvents()
+      .filter(e=> new Date((e.date||'')+'T00:00') >= new Date(now.toDateString()) && new Date((e.date||'')+'T00:00') <= horizon)
+      .sort((a,b)=> (a.date + (toHmAny(a.start)||'')).localeCompare(b.date + (toHmAny(b.start)||'')))
+      .slice(0,20);
+    box.innerHTML = items.length? '' : '<div class="muted-text">Keine Termine gefunden.</div>';
+    for(const e of items){
+      const row = document.createElement('div'); row.className='item';
+      row.innerHTML = `
+        <div class="dot" style="background:${e.color||'#22d3ee'}"></div>
+        <div style="flex:1">
+          <div style="font-weight:700">${e.company||e.type} <span class="pill status-${(e.status||'').toLowerCase()}">${e.status}</span></div>
+          <div class="muted-text">${new Date(e.date+'T00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})} ${toHmAny(e.start)? '· '+toHmAny(e.start):''} ${e.type? '· '+e.type:''} ${e.location? '· '+e.location:''}</div>
+          ${e.notes? `<div class="muted-text">📝 ${e.notes}</div>`:''}
+        </div>
+        <div><button class="btn" data-id="${e.id}">✎</button></div>`;
+      row.querySelector('button[data-id]')?.addEventListener('click',()=> openModal(e));
+      box.appendChild(row);
+    }
+  }
+
+  // Modal / CRUD
+  const modal = document.getElementById('eventModal');
+  const form  = document.getElementById('eventForm');
+  const fields = ['eventId','date','start','end','company','role','type','status','color','location','notes']
+    .reduce((acc,id)=> (acc[id] = document.getElementById(id), acc),{});
+
+  function openModal(ev){
+    const data = ev && ev.id ? ev : Object.assign({ id:'', start:'09:00', end:'', company:'', role:'', type:'Vorstellungsgespräch', status:'geplant', color:'#22d3ee', location:'', notes:'' }, ev||{});
+    for(const k in fields){ fields[k].value = data[k] ?? '' }
+    fields.eventId.value = data.id || fields.eventId.value || '';
+    fields.start.value   = toHmAny(fields.start.value);
+    fields.end.value     = toHmAny(fields.end.value);
+    document.getElementById('deleteBtn').style.display = data.id ? 'inline-flex' : 'none';
+    if(!modal.open) modal.showModal();
+  }
+
+  document.getElementById('closeModal').addEventListener('click', e=>{ e.preventDefault(); modal.close(); });
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const vals = Object.fromEntries(new FormData(form).entries());
+    const entry = {
+      id: vals.eventId || '',
+      date: vals.date,
+      start: toHmAny(vals.start),
+      end:   toHmAny(vals.end),
+      company: (vals.company||'').trim(),
+      role:    (vals.role||'').trim(),
+      type: vals.type,
+      status: vals.status,
+      color: vals.color||'#22d3ee',
+      location: (vals.location||'').trim(),
+      notes: (vals.notes||'').trim()
+    };
+    if(!entry.date){ notify('Bitte Datum wählen.'); return; }
+
+    try{
+      const id = await apiSave(entry);
+      entry.id = id;
+      const i = state.events.findIndex(x=>String(x.id)===String(id));
+      if(i>=0) state.events[i]=entry; else state.events.push(entry);
+      modal.close(); render();
+      notify('Gespeichert.');
+    }catch(err){ console.error(err); notify('Speichern fehlgeschlagen.'); }
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', async e=>{
+    e.preventDefault();
+    const id = fields.eventId.value && String(fields.eventId.value).trim();
+    if(!id){ notify('Dieser Eintrag hat noch keine ID (evtl. nie gespeichert).'); return; }
+
+    const ok = await confirmAsync('Diesen Termin wirklich löschen?', 'Löschen bestätigen');
+    if(!ok) return;
+
+    try{
+      await apiDelete(id);
+      state.events = state.events.filter(x=> String(x.id)!==String(id));
+      modal.close(); render();
+      notify('Eintrag gelöscht.');
+    }catch(err){ console.error(err); notify('Löschen fehlgeschlagen.'); }
+  });
+
+  // Navigation & Filter
+  document.getElementById('prevMonth').addEventListener('click',()=>{ let {y,m}=state; m--; if(m<0){m=11;y--} setMonth(y,m); });
+  document.getElementById('nextMonth').addEventListener('click',()=>{ let {y,m}=state; m++; if(m>11){m=0;y++} setMonth(y,m); });
+  document.getElementById('addQuick').addEventListener('click',()=> openModal({ date: toKey(new Date()), start:'10:00', type:'Vorstellungsgespräch', status:'geplant', color:'#22d3ee' }) );
+  document.getElementById('search').addEventListener('input', e=>{ state.filters.q=e.target.value; render(); });
+  document.getElementById('typeFilter').addEventListener('change', e=>{ state.filters.type=e.target.value; render(); });
+  document.getElementById('statusFilter').addEventListener('change', e=>{ state.filters.status=e.target.value; render(); });
+
+  // Export/Import
+  document.getElementById('exportBtn').addEventListener('click',()=>{
+    const blob = new Blob([JSON.stringify(state.events,null,2)],{type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href=url; a.download='bewerbungs-kalender.json'; a.click(); URL.revokeObjectURL(url);
+  });
+  document.getElementById('importFile').addEventListener('change', async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const txt = await file.text();
+    try{
+      const data = JSON.parse(txt);
+      if(!Array.isArray(data)) throw new Error('Ungültiges Format');
+      for (const d of data){
+        d.id = d.id || '';
+        d.date = toKey(d.date);
+        d.start = toHmAny(d.start||'');
+        d.end   = toHmAny(d.end||'');
+        await apiSave(d);
+      }
+      state.events = await apiList(); render(); notify('Import erfolgreich.');
+    }catch(err){ notify('Fehler beim Import.'); }
+    e.target.value='';
+  });
+
+  // Start
+  bootstrap();
+  </script>
+</body>
+</html>
