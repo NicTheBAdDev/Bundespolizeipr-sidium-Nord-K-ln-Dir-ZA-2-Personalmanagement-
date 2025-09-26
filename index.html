@@ -121,10 +121,34 @@
   html[data-role="dirza2"] [data-roles~="dirza2"] { display:inline-flex !important; }
   html[data-role="dirza3"] [data-roles~="dirza3"] { display:inline-flex !important; }
   /* /Role-gating */
+
+  /* === Vollbild Lade-Overlay mit Kreis === */
+  #loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+  }
+  #loginOverlay .spinner {
+    width: 64px; height: 64px;
+    border: 6px solid rgba(255,255,255,.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 <script src="./auth.js"></script>
 </head>
 <body>
+<!-- Vollbild Login Overlay -->
+<div id="loginOverlay"><div class="spinner" aria-label="Lädt…"></div></div>
+
 <!-- Government bar -->
 <div class="govbar">
 <div class="left">
@@ -161,7 +185,7 @@
 <div class="dot" style="background:var(--accent)"></div>
 <div>
 <div style="font-weight:700">Programmleitung</div>
-<div class="muted-text">Nic Winter • <a href="mailto:support@streamguys.online">support@streamguys.online</a></div>
+<div class="muted-text">Nic Winter • <a href="mailto:nic.wintert@bundespolizei.de">nic.winter@bundespolizei.de</a></div>
 </div>
 </div>
 </div>
@@ -266,6 +290,7 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
 
     function renderNews(list){
       const box = $('#newsList');
+      if (!box) return;
       box.innerHTML = '';
       list.sort((a,b)=> (b.date+a.title).localeCompare(a.date+b.title));
       list.forEach(n=>{
@@ -287,6 +312,7 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
 
     function renderMilestones(){
       const box = $('#milestones');
+      if (!box) return;
       box.innerHTML = '';
       MILESTONES
         .sort((a,b)=> a.date.localeCompare(b.date))
@@ -303,6 +329,7 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
 
     function renderDocs(list){
       const box = $('#docList');
+      if (!box) return;
       box.innerHTML = '';
       list.forEach(d=>{
         const row = document.createElement('div'); row.className = 'item';
@@ -349,12 +376,12 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
       });
     }
 
-    // Login dialog (minimal change)
+    // Login dialog
     const loginDialog = document.getElementById('loginDialog');
     document.getElementById('loginBtn')?.addEventListener('click', ()=> loginDialog.showModal());
     document.getElementById('closeLogin').addEventListener('click', ()=> loginDialog.close());
     document.getElementById('cancelLogin').addEventListener('click', ()=> loginDialog.close());
-    // Toggle password visibility (scoped)
+    // Toggle password visibility
     const tp = document.querySelector('#loginDialog .togglePwd');
     const pwd = document.querySelector('#loginDialog input[name="password"]');
     tp?.addEventListener('click', ()=>{
@@ -364,22 +391,31 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
       tp.textContent = isPwd ? '🙈' : '👁️';
     });
 
+    // === Login mit Overlay-Spinner ===
     document.getElementById('loginForm').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const f = e.target;
       const username = f.username.value.trim();
       const password = f.password.value;
+      const overlay = document.getElementById('loginOverlay');
+
+      // Dialog sofort schließen und Overlay zeigen
+      loginDialog.close();
+      if (overlay) overlay.style.display = 'flex';
+
       try {
         if (!window.Auth || typeof window.Auth.login !== 'function') throw new Error('auth.js nicht geladen');
         const info = await window.Auth.login(username, password);
         document.documentElement.dataset.role = info.role || 'guest';
         notify(`Willkommen ${info.username} (${info.role})`);
-        loginDialog.close();
       } catch (err) {
-        notify('Login fehlgeschlagen: ' + (err.message || ''));
+        notify('Login fehlgeschlagen: ' + (err && err.message ? err.message : ''));
       }
+
+      if (overlay) overlay.style.display = 'none';
       f.reset();
     });
+
     // Initial render
     renderProgress();
     renderNews(NEWS);
