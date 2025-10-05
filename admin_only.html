@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de" data-role="guest">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adminbereich – Benutzerverwaltung</title>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --text:#e5e7eb;
+      --accent:#22d3ee; --accent-2:#a78bfa; --danger:#ef4444; --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+
+    /* === App Shell / Layout === */
+    .app{max-width:1600px;margin:auto;padding:24px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+    .title{font-size:clamp(20px,2.8vw,32px);font-weight:800}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button,.btn{border:0;border-radius:14px;padding:10px 14px;background:var(--muted);color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:transform .06s ease,filter .2s ease}
+    button:hover{filter:brightness(1.07)} button:active{transform:translateY(1px)}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b1020;font-weight:700}
+    .btn-danger{background:linear-gradient(135deg,#f87171,var(--danger))}
+
+    .card{background:rgba(255,255,255,.04);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius)}
+    .card.pad{padding:16px}
+
+    .layout{display:grid;grid-template-columns:3fr 1fr;gap:16px}
+    @media (max-width:1200px){.layout{grid-template-columns:1fr}}
+
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .grid-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:720px){.grid-3,.grid-2,.grid-4{grid-template-columns:1fr}}
+
+    .muted-text{opacity:.8;font-size:13px}
+    .eyebrow{font-size:12px;letter-spacing:.3px;opacity:.9}
+    .h1{font-size:clamp(22px,3.2vw,36px);font-weight:900}
+    .h2{font-size:clamp(18px,2.4vw,26px);font-weight:800;margin:0 0 8px}
+
+    /* === Top Gov bar (Logo + Title + Clock) === */
+    .govbar{
+      position: sticky; top: 0; z-index: 500;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, rgba(11,16,32,.85), rgba(15,23,42,.85));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+      justify-content: space-between;
+    }
+    .govbar .left{display:flex;align-items:center;gap:12px}
+    .govbar .gov-logo{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;background:#000;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+    .govbar .gov-logo img{width:100%;height:100%;object-fit:contain}
+    .govbar .gov-title{font-size:clamp(16px,2vw,22px);font-weight:700;letter-spacing:.2px;color:#e5e7eb;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+    .gov-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+    .clock-pill{font-variant-numeric:tabular-nums;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#e5e7eb;box-shadow:0 4px 14px rgba(0,0,0,.25) inset;min-width:72px;text-align:center}
+
+    /* === Hero === */
+    .hero{display:grid;gap:14px;padding:20px}
+    .hero .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.12)}
+
+    /* === Metrics === */
+    .metric{padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+    .metric .label{font-size:12px;opacity:.8;margin-bottom:6px}
+    .metric .value{font-size:24px;font-weight:800}
+
+    /* === Progress Bar === */
+    .progress{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+    .progress > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .6s ease}
+
+    /* === Lists / Items === */
+    .list{padding:16px}
+    .item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);margin-bottom:8px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;white-space:nowrap}
+
+    /* === Timeline === */
+    .timeline{padding:16px}
+    .milestone{position:relative;padding:10px 10px 10px 14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:8px}
+    .milestone::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--accent-2));border-radius:12px 0 0 12px}
+
+    /* === Sections === */
+    section[id]{scroll-margin-top:72px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .search{min-width:240px}
+
+    /* === Footer === */
+    footer{opacity:.7;text-align:center;font-size:12px;padding:10px}
+  
+/* === Pretty Login Dialog (scoped, adjusted) === */
+#loginDialog::backdrop{ background: rgba(2,6,23,.55); backdrop-filter: blur(2px); }
+#loginDialog{ border-radius: var(--radius); border:1px solid rgba(255,255,255,.10); background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); box-shadow: var(--shadow); color:#fff; font-size:15px; }
+#loginDialog .dlg-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.08); }
+#loginDialog .dlg-title{ font-weight:800; letter-spacing:.2px; font-size:18px; color:#fff; }
+#loginDialog .dlg-body{ padding:20px; display:grid; gap:14px; }
+#loginDialog .field{ display:grid; gap:8px; }
+#loginDialog label span{ font-size:14px; font-weight:600; color:#fff; }
+#loginDialog input{ width:100%; padding:12px 38px 12px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.35); color: #fff; outline: none; font-size:15px; }
+#loginDialog input:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
+#loginDialog .pwd-wrap{ position:relative; }
+#loginDialog .togglePwd{ position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  border:0; background:transparent; color:#fff; opacity:.85; cursor:pointer; font-size:16px; padding:0 4px; line-height:1; height:auto; }
+#loginDialog .dlg-actions{ display:flex; justify-content:flex-end; gap:10px; padding:12px 20px 20px; }
+#loginDialog .hint{ font-size:12px; opacity:.8; color:#fff; }
+#loginDialog .brand{ display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; color:#fff; }
+#loginDialog .brand .dot{ width:8px;height:8px;border-radius:50%; background: var(--accent); }
+
+  /* notify z-index */
+  .toast, .notify { z-index: 99999 !important; }
+
+  /* Role-gating */
+  [data-roles]{ display:none !important; }
+  html[data-role="guest"]  [data-roles~="guest"]  { display:inline-flex !important; }
+  html[data-role="admin"]  [data-roles~="admin"]  { display:inline-flex !important; }
+  html[data-role="dirza2"] [data-roles~="dirza2"] { display:inline-flex !important; }
+  html[data-role="dirza3"] [data-roles~="dirza3"] { display:inline-flex !important; }
+  /* /Role-gating */
+</style>
+  <script src="./auth.js"></script>
+  <style>
+    /* Admin-table tweaks */
+    table{ width:100%; border-collapse:collapse; font-size:14px; }
+    th, td{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.10); }
+    th{ text-align:left; font-weight:700; opacity:.9; }
+    tbody tr:hover{ background:rgba(255,255,255,.04); }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .status-pill{ font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); }
+    .ok{ background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.35); }
+    .off{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+    .form-grid{ display:grid; grid-template-columns:2fr 1fr 2fr auto; gap:10px; }
+    @media (max-width:800px){ .form-grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <!-- Government bar -->
+  <div class="govbar">
+    <div class="left">
+      <span class="gov-logo"><img alt="Bundespolizei Wappen" src="assets/Federal_Police_Patch.svg.png"/></span>
+      <span class="gov-title">Bundespolizeipräsidium Nord Köln</span>
+    </div>
+    <div class="gov-right">
+      <span class="clock-pill" id="clock">--:--</span>
+    </div>
+  </div>
+
+  <div class="app">
+    <header>
+      <div class="title">🔒 Adminbereich – Benutzerverwaltung</div>
+      <span class="clock-pill" id="roleIndicatorHeader">Gast</span>
+    </header>
+
+    <section class="card pad" id="accessDenied" style="display:none">
+      <div class="h2">🚫 Zugriff verweigert</div>
+      <p class="muted-text">Diese Seite ist nur für Administratoren zugänglich.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn" href="index.html">← Zurück zur Startseite</a>
+      </div>
+    </section>
+
+    <section class="card pad" id="adminContent" style="display:none">
+      <div class="h2">Nutzerübersicht</div>
+      <div id="msg" class="muted-text" style="margin:8px 0 14px"></div>
+      <div class="grid">
+        <div class="card pad">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+            <div class="h2" style="margin:0">Aktive Benutzer</div>
+            <button id="refreshBtn" class="btn">🔄 Aktualisieren</button>
+          </div>
+          <div style="overflow:auto">
+            <table id="usersTable" aria-describedby="msg">
+              <thead>
+                <tr>
+                  <th>Benutzername</th>
+                  <th>Rolle</th>
+                  <th>Status</th>
+                  <th style="width:320px">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="4" class="muted-text">Lade Benutzer…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <div class="h2">Benutzer hinzufügen</div>
+          <div class="form-grid">
+            <input id="newUsername" placeholder="Benutzername" />
+            <select id="newRole">
+              <option value="" disabled selected>– Rolle wählen –</option>
+              <option value="admin">Admin</option>
+              <option value="dirza2">DirZA 2</option>
+              <option value="dirza3">DirZA 3</option>
+              <option value="grenzschutz">Grenzschutz</option>
+            </select>
+            <input id="newPassword" placeholder="Startpasswort" type="text" />
+            <button id="addUserBtn" class="btn-accent">➕ Anlegen</button>
+          </div>
+          <br>
+          <div class="help">Tipp: Sichere Passwörter wählen. Rollen: admin | dirza2 | dirza3 | grenzschutz</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>© 2025-2030 Bundespolizei – Programm GIT BPol</footer>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw-pFp848JDIyaIaT92LP91zSdv-IZh-xr9TOQZljyArHHdHbAigV0Q1YIfTHEKdBUXHg/exec";
+
+    // Clock
+    (function(){
+      var clockEl=document.getElementById('clock');
+      function u(){var d=new Date();var hh=String(d.getHours()).padStart(2,'0');var mm=String(d.getMinutes()).padStart(2,'0');if(clockEl) clockEl.textContent=hh+':'+mm;}
+      u(); setInterval(u,1000);
+    })();
+
+    // Role UI + gate
+    function roleLabel(r){var x=(r||'guest').toLowerCase();if(x==='admin')return'Admin';if(x==='dirza2')return'DirZA 2';if(x==='dirza3')return'DirZA 3';if(x==='grenzschutz')return'Grenzschutz';return'Gast';}
+    function setRolePills(r){var l=roleLabel(r);var a=document.getElementById('roleIndicator');if(a)a.textContent=l;var b=document.getElementById('roleIndicatorHeader');if(b)b.textContent=l;}
+    function enforceGate(r){var ok=String(r||'guest').toLowerCase()==='admin';document.getElementById('adminContent').style.display=ok?'':'none';document.getElementById('accessDenied').style.display=ok?'none':'';}
+
+    (function initSession(){
+      if(window.Auth&&typeof window.Auth.session==='function'){
+        window.Auth.session().then(function(s){
+          var r=(s&&s.role)?s.role:(document.documentElement.dataset.role||'guest');
+          setRolePills(r); enforceGate(r);
+          if((r||'').toLowerCase()==='admin') fetchUsers();
+        }).catch(function(){
+          var r=document.documentElement.dataset.role||'guest';
+          setRolePills(r); enforceGate(r);
+        });
+      } else {
+        var r=document.documentElement.dataset.role||'guest';
+        setRolePills(r); enforceGate(r);
+      }
+    })();
+    document.addEventListener('rolechange',function(e){
+      var r=(e&&e.detail&&e.detail.role)?e.detail.role:(document.documentElement.dataset.role||'guest');
+      setRolePills(r); enforceGate(r);
+      if((r||'').toLowerCase()==='admin') fetchUsers();
+    });
+
+    // Token helper
+    function getToken(){ try{ return sessionStorage.getItem('auth_token'); }catch(e){ return null; } }
+
+    async function postPlain(payload){
+      const p=Object.assign({}, payload);
+      const tok=getToken(); if(tok) p.token=tok;
+      const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});
+      const txt=await res.text(); try{return JSON.parse(txt);}catch(e){return {ok:false,error:'invalid_json',raw:txt};}
+    }
+
+    // Users CRUD
+    const usersBody=document.getElementById('usersBody'); const msg=document.getElementById('msg'); function setMsg(t){ if(msg) msg.textContent=t||''; }
+
+    async function fetchUsers(){
+      if(!usersBody) return;
+      usersBody.innerHTML='<tr><td colspan="4" class="muted-text">Lade Benutzer…</td></tr>';
+      const data=await postPlain({ action:'usersList' });
+      if(!data.ok){ usersBody.innerHTML='<tr><td colspan="4" class="muted-text">Fehler: '+(data.error||'unbekannt')+'</td></tr>'; return; }
+      renderUsers(data.users||[]); setMsg('Benutzer geladen: '+(data.users?data.users.length:0));
+    }
+
+    function renderUsers(items){
+      if(!usersBody) return;
+      usersBody.innerHTML='';
+      (items||[]).forEach(function(u){
+        const off=!!u.disabled;
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${u.username||''}</strong></td>
+          <td>${(u.role||'').toUpperCase()}</td>
+          <td><span class="status-pill ${off?'off':'ok'}">${off?'deaktiviert':'aktiv'}</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn" data-act="toggle" data-user="${u.username}">${off?'Aktivieren':'Deaktivieren'}</button>
+              <button class="btn-danger" data-act="delete" data-user="${u.username}">Löschen</button>
+            </div>
+          </td>`;
+        usersBody.appendChild(tr);
+      });
+    }
+
+    usersBody && usersBody.addEventListener('click', async function(e){
+      const btn=e.target.closest('button'); if(!btn) return;
+      const act=btn.getAttribute('data-act'); const user=btn.getAttribute('data-user'); if(!act||!user) return;
+      if(act==='delete'){
+        if(!confirm('Benutzer "'+user+'" wirklich löschen?')) return;
+        const r=await postPlain({action:'deleteUser',username:user});
+        if(!r.ok){ alert('Fehler: '+(r.error||'unbekannt')); return; }
+        fetchUsers(); return;
+      }
+      if(act==='toggle'){
+        const isOff=/deaktivieren/i.test(btn.textContent||'');
+        const action=isOff?'disableUser':'enableUser';
+        const r=await postPlain({action,username:user});
+        if(!r.ok){ alert('Fehler: '+(r.error||'unbekannt')); return; }
+        fetchUsers(); return;
+      }
+    });
+
+    document.getElementById('refreshBtn')?.addEventListener('click', fetchUsers);
+
+    document.getElementById('addUserBtn')?.addEventListener('click', async function(){
+      const u=document.getElementById('newUsername')?.value.trim();
+      const r=document.getElementById('newRole')?.value;
+      const p=document.getElementById('newPassword')?.value;
+      if(!u||!r||!p){ alert('Bitte Benutzername, Rolle und Passwort angeben.'); return; }
+      const resp=await postPlain({ action:'addUser', username:u, role:r, password:p });
+      if(!resp.ok){ alert('Fehler: '+(resp.error||'unbekannt')); return; }
+      document.getElementById('newUsername').value='';
+      document.getElementById('newRole').value='';
+      document.getElementById('newPassword').value='';
+      fetchUsers();
+    });
+  </script>
+</body>
+</html>
