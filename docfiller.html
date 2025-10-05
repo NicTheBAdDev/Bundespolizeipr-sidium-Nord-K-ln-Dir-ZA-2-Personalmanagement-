@@ -190,10 +190,6 @@ button#submitBtn[disabled]{ opacity:.6; cursor:not-allowed; }
     <div class="card">
       <header>
         <div class="brand">DocFiller</div>
-        <button id="themeBtn" class="theme-btn" type="button" aria-label="Theme umschalten">
-          <span id="themeIcon" class="icon" aria-hidden="true">🌙</span>
-          <span id="themeLabel">Dark</span>
-        </button>
         <span class="clock-pill" id="roleIndicator">Gast</span>
       </header>
 
@@ -251,37 +247,6 @@ const FIELD_OPTIONS = {
 const DATE_FIELDS = new Set(["Datum","Entlassungsdatum","Suspendierung bis zum","Datum der Suspendierung","Datum der Aufhebung","Ende der Probezeit"]);
 function isDateField(key) { return DATE_FIELDS.has(key); }
 /* ========================= */
-
-/* ===== Dark Mode ===== */
-(function initTheme(){
-  const root = document.documentElement;
-  const btn = document.getElementById('themeBtn');
-  const icon = document.getElementById('themeIcon');
-  const label = document.getElementById('themeLabel');
-
-  const saved = localStorage.getItem('docf_theme'); // 'light' | 'dark' | 'auto'
-  if (saved === 'light' || saved === 'dark' || saved === 'auto') {
-    root.setAttribute('data-theme', saved);
-  } else {
-    root.setAttribute('data-theme', 'auto');
-  }
-
-  function currentMode(){ return root.getAttribute('data-theme') || 'auto'; }
-  function updateUI(){
-    const m = currentMode();
-    if (m === 'dark') { icon.textContent = '☀️'; label.textContent = 'Light'; }
-    else { icon.textContent = '🌙'; label.textContent = 'Dark'; }
-  }
-  updateUI();
-
-  btn.addEventListener('click', () => {
-    const m = currentMode();
-    const next = m === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    localStorage.setItem('docf_theme', next);
-    updateUI();
-  });
-})();
 
 /* ===== App Logic ===== */
 const searchInput = document.getElementById('search');
