@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="auto">
+<head>
+<script src="./auth.js"></script>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --text:#e5e7eb;
+      --accent:#22d3ee; --accent-2:#a78bfa; --danger:#ef4444; --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+
+    /* === App Shell / Layout === */
+    .app{max-width:1600px;margin:auto;padding:24px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+    .title{font-size:clamp(20px,2.8vw,32px);font-weight:800}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button,.btn{border:0;border-radius:14px;padding:10px 14px;background:var(--muted);color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:transform .06s ease,filter .2s ease}
+    button:hover{filter:brightness(1.07)} button:active{transform:translateY(1px)}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b1020;font-weight:700}
+    .btn-danger{background:linear-gradient(135deg,#f87171,var(--danger))}
+
+    .card{background:rgba(255,255,255,.04);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius)}
+    .card.pad{padding:16px}
+
+    .layout{display:grid;grid-template-columns:3fr 1fr;gap:16px}
+    @media (max-width:1200px){.layout{grid-template-columns:1fr}}
+
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .grid-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:720px){.grid-3,.grid-2,.grid-4{grid-template-columns:1fr}}
+
+    .muted-text{opacity:.8;font-size:13px}
+    .eyebrow{font-size:12px;letter-spacing:.3px;opacity:.9}
+    .h1{font-size:clamp(22px,3.2vw,36px);font-weight:900}
+    .h2{font-size:clamp(18px,2.4vw,26px);font-weight:800;margin:0 0 8px}
+
+    /* === Top Gov bar (Logo + Title + Clock) === */
+    .govbar{
+      position: sticky; top: 0; z-index: 500;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, rgba(11,16,32,.85), rgba(15,23,42,.85));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+      justify-content: space-between;
+    }
+    .govbar .left{display:flex;align-items:center;gap:12px}
+    .govbar .gov-logo{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;background:#000;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+    .govbar .gov-logo img{width:100%;height:100%;object-fit:contain}
+    .govbar .gov-title{font-size:clamp(16px,2vw,22px);font-weight:700;letter-spacing:.2px;color:#e5e7eb;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+    .gov-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+    .clock-pill{font-variant-numeric:tabular-nums;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#e5e7eb;box-shadow:0 4px 14px rgba(0,0,0,.25) inset;min-width:72px;text-align:center}
+
+    /* === Hero === */
+    .hero{display:grid;gap:14px;padding:20px}
+    .hero .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.12)}
+
+    /* === Metrics === */
+    .metric{padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+    .metric .label{font-size:12px;opacity:.8;margin-bottom:6px}
+    .metric .value{font-size:24px;font-weight:800}
+
+    /* === Progress Bar === */
+    .progress{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+    .progress > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .6s ease}
+
+    /* === Lists / Items === */
+    .list{padding:16px}
+    .item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);margin-bottom:8px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;white-space:nowrap}
+
+    /* === Timeline === */
+    .timeline{padding:16px}
+    .milestone{position:relative;padding:10px 10px 10px 14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:8px}
+    .milestone::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--accent-2));border-radius:12px 0 0 12px}
+
+    /* === Sections === */
+    section[id]{scroll-margin-top:72px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .search{min-width:240px}
+
+    /* === Footer === */
+    footer{opacity:.7;text-align:center;font-size:12px;padding:10px}
+  
+/* === Pretty Login Dialog (scoped, adjusted) === */
+#loginDialog::backdrop{ background: rgba(2,6,23,.55); backdrop-filter: blur(2px); }
+#loginDialog{ border-radius: var(--radius); border:1px solid rgba(255,255,255,.10); background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); box-shadow: var(--shadow); color:#fff; font-size:15px; }
+#loginDialog .dlg-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.08); }
+#loginDialog .dlg-title{ font-weight:800; letter-spacing:.2px; font-size:18px; color:#fff; }
+#loginDialog .dlg-body{ padding:20px; display:grid; gap:14px; }
+#loginDialog .field{ display:grid; gap:8px; }
+#loginDialog label span{ font-size:14px; font-weight:600; color:#fff; }
+#loginDialog input{ width:100%; padding:12px 38px 12px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.35); color: #fff; outline: none; font-size:15px; }
+#loginDialog input:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
+#loginDialog .pwd-wrap{ position:relative; }
+#loginDialog .togglePwd{ position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  border:0; background:transparent; color:#fff; opacity:.85; cursor:pointer; font-size:16px; padding:0 4px; line-height:1; height:auto; }
+#loginDialog .dlg-actions{ display:flex; justify-content:flex-end; gap:10px; padding:12px 20px 20px; }
+#loginDialog .hint{ font-size:12px; opacity:.8; color:#fff; }
+#loginDialog .brand{ display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; color:#fff; }
+#loginDialog .brand .dot{ width:8px;height:8px;border-radius:50%; background: var(--accent); }
+
+  /* notify z-index */
+  .toast, .notify { z-index: 99999 !important; }
+
+  /* Role-gating */
+  [data-roles]{ display:none !important; }
+  html[data-role="guest"]  [data-roles~="guest"]  { display:inline-flex !important; }
+  html[data-role="admin"]  [data-roles~="admin"]  { display:inline-flex !important; }
+  html[data-role="dirza2"] [data-roles~="dirza2"] { display:inline-flex !important; }
+  html[data-role="dirza3"] [data-roles~="dirza3"] { display:inline-flex !important; }
+  html[data-role="grenzschutz"] [data-roles~="grenzschutz"] { display:inline-flex !important; }
+  /* /Role-gating */
+</style>
+  
+<style>
+/* ===== DocFiller scoped tweaks (preserve original look while using index variables) ===== */
+body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+.container { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+.card { padding:24px; }
+
+header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
+.brand { font-weight:800; letter-spacing:.2px; }
+.theme-btn {
+  display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.18); background:transparent; color:var(--text); cursor:pointer;
+}
+.theme-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.icon{ width:16px; height:16px; display:inline-block; }
+
+h1 { margin:6px 0 16px; font-size:22px; }
+
+label { display:block; font-weight:600; margin:14px 0 6px; }
+input, select {
+  width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.35); color:#fff;
+  border-radius:12px; font-size:14px; outline:none;
+}
+input::placeholder{ color:rgba(229,231,235,.6); }
+select option, optgroup { background:#0f1530; color:#e5e7eb; font-style:normal; font-weight:700; }
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
+
+button#submitBtn {
+  margin-top:16px; padding:10px 14px; border-radius:12px; border:0;
+  background: var(--muted); color: var(--text); font-weight:700; cursor:pointer; box-shadow: var(--shadow);
+}
+button#submitBtn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+.grid-two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:720px){ .grid-two { grid-template-columns:1fr; } }
+
+.help { color:rgba(229,231,235,.75); font-size:12px; margin-top:8px; }
+.error { color:#ef4444; white-space:pre-wrap; margin-top:12px; }
+.success { color:#10b981; margin-top:16px; }
+.links a { display:inline-block; margin-right:12px; text-decoration:underline; }
+#result .links { margin-bottom:8px; }
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.25);
+  border-top-color:#e5e7eb; border-radius:50%; animation:spin .9s linear infinite; vertical-align:middle; margin-left:8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Make the DocFiller card stand out a bit more on the glass background */
+.container .card { background: rgba(17,24,39,.6); border:1px solid rgba(255,255,255,.10); }
+</style>
+
+
+  <meta charset="utf-8" />
+  <title>DocFiller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+
+<style>
+  .guest-overlay {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    background: #7f1d1d;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,.3);
+  }
+  .guest-blocker {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0);
+    z-index: 10000;
+  }
+  html[data-role="guest"] .guest-overlay,
+  html[data-role="guest"] .guest-blocker {
+    display: block;
+  }
+</style>
+
+</head>
+
+<div class="guest-blocker"></div>
+<div class="guest-overlay">
+  🔒 Bitte melde dich an, um diese Funktionen zu nutzen.
+</div>
+
+
+  <div class="govbar">
+    <div class="left">
+    <span class="gov-logo"><img alt="Bundespolizei Wappen" src="assets/Federal_Police_Patch.svg.png"/></span>
+    <span class="gov-title">Bundespolizeipräsidium Nord Köln</span>
+    </div>
+    <div class="gov-right"><span class="clock-pill" id="roleIndicator">Gast</span><span class="clock-pill" id="clock">--:--</span></div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <header>
+        <div class="brand">DocFiller</div>
+      </header>
+
+      <h1>Dokument erstellen</h1>
+
+      <!-- Suchfeld -->
+      <label for="search">Vorlagen suchen</label>
+      <input id="search" type="search" placeholder="Tippe zum Filtern …" />
+
+      <!-- Vorlagen-Auswahl -->
+      <label for="template">Vorlage</label>
+      <select id="template" required>
+        <option value="" disabled selected>– Vorlage wählen –</option>
+      </select>
+      <div class="help">Feedback, Bugs, Neue Vorlagen etc. bitte an die support@streamguys.online email ♡</div>
+      <div class="help">Made by Nic Winter</div>
+
+      <!-- Dynamisch generierte Felder -->
+      <div id="dynamicFields"></div>
+
+      <!-- Aktionen -->
+      <button id="submitBtn" type="button">Dokument erzeugen</button>
+      <div id="msg" class="help"></div>
+      <div id="error" class="error" hidden></div>
+      <div id="result" class="success"></div>
+    </div>
+  </div>
+
+<script>
+/* ========= KONFIG ========= */
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbz-Tuu-1R_T2cfM5jQlCz16PD3gP-OnD94nQ3OShEM1rSiRE5PYtZIEdK2wVtKBgneX/exec";
+const API_TOKEN = ""; // optional, meist leer lassen
+
+// Dropdown-Optionen je Placeholder (Option A)
+const FIELD_OPTIONS = {
+  "Beamtenverhältnis": ["auf Probe", "auf Widerruf", "auf Lebenszeit"],
+  "Dienstgrad": [
+    "Polizeimeisteranwärter",
+    "Polizeimeister",
+    "Polizeiobermeister",
+    "Polizeihauptmeister",
+    "Polizeikommissaranwärter",
+    "Polizeikommissar",
+    "Polizeioberkommissar",
+    "Polizeihauptkommissar",
+    "Polizeihauptkommissar A12",
+    "Erster Polizeihauptkommissar"
+],
+  "Abteilung": ["DirZA1", "DirZA2", "DirZA3", "DirZA4", "DirZA5"],
+  "Besoldungsgruppe": ["A6", "A7", "A8", "A9", "A10"],
+  "Anrede": ["Frau", "Herr", "Divers"]
+};
+
+// EXPLIZITE Date-Picker Felder
+const DATE_FIELDS = new Set(["Datum","Entlassungsdatum","Suspendierung bis zum","Datum der Suspendierung","Datum der Aufhebung","Ende der Probezeit"]);
+function isDateField(key) { return DATE_FIELDS.has(key); }
+/* ========================= */
+
+/* ===== App Logic ===== */
+const searchInput = document.getElementById('search');
+const templateSelect = document.getElementById('template');
+const dynamic = document.getElementById('dynamicFields');
+const btn = document.getElementById('submitBtn');
+const msg = document.getElementById('msg');
+const err = document.getElementById('error');
+const res = document.getElementById('result');
+
+let ALL_TEMPLATES = [];
+
+function showError(e){ err.hidden = false; err.textContent =
+  (e && e.message) ? e.message : (typeof e === 'string' ? e : 'Unbekannter Fehler'); }
+function clearStatus(){ err.hidden = true; err.textContent = '';
+  res.innerHTML = ''; msg.textContent = ''; }
+
+/* --- Required-field validation --- */
+function validateRequiredFields() {
+  let firstInvalid = null;
+  dynamic.querySelectorAll('input, select').forEach(el => {
+    if (!el.required) return;
+    const isEmpty = (el.tagName === 'SELECT')
+      ? (el.value === '')
+      : (el.type === 'date' ? el.value === '' : el.value.trim() === '');
+    if (isEmpty) {
+      try { el.setCustomValidity('Bitte ausfüllen.'); } catch(e) {}
+      if (!firstInvalid) firstInvalid = el;
+    } else {
+      try { el.setCustomValidity(''); } catch(e) {}
+    }
+  });
+  if (firstInvalid) {
+    try { firstInvalid.reportValidity(); } catch(e) {}
+    try { firstInvalid.focus(); } catch(e) {}
+    try { firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+    return false;
+  }
+  return true;
+}
+
+function updateSubmitState() {
+  const hasTemplate = !!templateSelect.value;
+  let allFilled = hasTemplate;
+  dynamic.querySelectorAll('input[required], select[required]').forEach(el => {
+    const empty = (el.tagName === 'SELECT') ? (el.value === '') :
+                  (el.type === 'date' ? el.value === '' : el.value.trim() === '');
+    if (empty) allFilled = false;
+  });
+  try { (document.getElementById('submitBtn')||{}).disabled = !allFilled; } catch(e) {}
+}
+
+// Hook up live validation
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof dynamic !== 'undefined') {
+    dynamic.addEventListener('input', updateSubmitState);
+    dynamic.addEventListener('change', updateSubmitState);
+  }
+  if (typeof templateSelect !== 'undefined') {
+    templateSelect.addEventListener('change', updateSubmitState);
+  }
+  // Initial state
+  try { updateSubmitState(); } catch(e) {}
+});
+/* --- end validation --- */
+
+/* --- API helpers --- */
+async function apiGet(params) {
+  const url = new URL(GAS_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  if (API_TOKEN) url.searchParams.set('token', API_TOKEN);
+  const r = await fetch(url.toString(), { method: "GET", mode: "cors" });
+  const j = await r.json();
+  if (j.error) throw j.error;
+  return j;
+}
+async function apiPost(action, payload) {
+  const body = new URLSearchParams();
+  body.set("action", action);
+  if (API_TOKEN) body.set("token", API_TOKEN);
+  body.set("payload", JSON.stringify(payload));
+  const r = await fetch(GAS_URL, {
+    method: "POST",
+    mode: "cors",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: body.toString()
+  });
+  const j = await r.json();
+  if (j.error) throw j.error;
+  return j;
+}
+
+/* --- Templates laden --- */
+(async () => {
+  try {
+    msg.innerHTML = 'Lade Vorlagen<span class="spinner"></span>';
+    const j = await apiGet({ action: "getTemplates" });
+    ALL_TEMPLATES = j.templates || [];
+    renderTemplateOptions(ALL_TEMPLATES);
+    msg.textContent = ALL_TEMPLATES.length ? 'Vorlagen geladen.' : 'Keine Vorlagen gefunden.';
+  } catch (e) { showError(e); }
+})();
+
+/* --- Select rendern --- */
+function renderTemplateOptions(items) {
+  templateSelect.innerHTML = '<option value="" disabled selected>– Vorlage wählen –</option>';
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.textContent = item.name;
+    templateSelect.appendChild(opt);
+  });
+}
+
+/* --- Live-Suche --- */
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  const filtered = !q ? ALL_TEMPLATES : ALL_TEMPLATES.filter(t =>
+    t.name.toLowerCase().includes(q)
+  );
+  renderTemplateOptions(filtered);
+  dynamic.innerHTML = '';
+  res.innerHTML = '';
+  msg.textContent = filtered.length
+    ? (q ? `Gefunden: ${filtered.length}` : '')
+    : 'Keine Treffer.';
+});
+
+/* --- Vorlage geändert -> Platzhalter holen & Felder bauen --- */
+templateSelect.addEventListener('change', async () => {
+  clearStatus();
+  dynamic.innerHTML = ''; res.innerHTML = '';
+  const id = templateSelect.value;
+  if (!id) return;
+
+  try {
+    msg.innerHTML = 'Lese Platzhalter<span class="spinner"></span>';
+    const j = await apiGet({ action: "getPlaceholders", templateId: id });
+    const keys = j.placeholders || [];
+
+    const order = ['Vorname','Nachname','Datum','Entlassungsdatum'];
+    keys.sort((a,b)=> (order.indexOf(a)+1 || 999) - (order.indexOf(b)+1 || 999) || a.localeCompare(b,'de'));
+
+    keys.forEach(key => {
+      const fieldId = 'f_' + key.replace(/\s+/g,'_');
+      const label = document.createElement('label'); label.htmlFor = fieldId; label.textContent = key;
+
+      let input;
+      const opts = FIELD_OPTIONS[key];
+      if (opts && Array.isArray(opts) && opts.length) {
+        input = document.createElement('select');
+        const empty = document.createElement('option');
+        empty.value = ""; empty.textContent = "– bitte wählen –";
+        input.appendChild(empty);
+        opts.forEach(v => {
+          const o = document.createElement('option');
+          o.value = v; o.textContent = v;
+          input.appendChild(o);
+        });
+      } else if (isDateField(key)) {
+        input = document.createElement('input');
+        input.type = 'date';
+        input.valueAsDate = new Date();
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+      }
+
+      input.id = fieldId; input.dataset.key = key; input.required = true;
+
+      if (/^(Vorname|Nachname)$/i.test(key)) {
+        let row = dynamic.querySelector('.grid-two');
+        if (!row) { row = document.createElement('div'); row.className = 'grid-two'; dynamic.appendChild(row); }
+        const wrap = document.createElement('div'); wrap.appendChild(label); wrap.appendChild(input); row.appendChild(wrap);
+      } else {
+        dynamic.appendChild(label); dynamic.appendChild(input);
+      }
+    });
+
+    msg.textContent = keys.length ? 'Platzhalter bereit.' : 'Keine {{…}}-Platzhalter in der Vorlage gefunden.';
+  } catch (e) { showError(e); }
+});
+
+/* --- Generieren (Multi-Dokument kompatibel) --- */
+btn.addEventListener('click', async () => {
+  clearStatus();
+  const templateId = templateSelect.value;
+  if (!validateRequiredFields()) return;
+
+  const fields = {};
+  dynamic.querySelectorAll('input, select').forEach(inp => {
+    const key = inp.dataset.key;
+    const val = (inp.tagName === 'INPUT' && inp.type === 'date' && inp.value)
+      ? new Date(inp.value).toLocaleDateString('de-DE')
+      : inp.value;
+    fields[key] = val ?? '';
+  });
+
+  btn.disabled = true;
+  msg.innerHTML = 'Erzeuge Dokument<span class="spinner"></span>';
+
+  try {
+    const r = await apiPost('generateDoc', { templateId, fields });
+    const items = (r && Array.isArray(r.results)) ? r.results : [r];
+
+    res.innerHTML = `
+      <p><strong>Fertig!</strong> Es wurden ${items.length} Dokument(e) erstellt:</p>
+      ${items.map(it => `
+        <div class="links" style="margin-bottom:8px">
+          <em>${it.fileName}</em><br>
+          <a href="${it.docUrl}" target="_blank" rel="noopener">Google&nbsp;Doc öffnen</a>
+          <a href="${it.pdfUrl}" target="_blank" rel="noopener" style="margin-left:12px">PDF öffnen</a>
+        </div>
+      `).join('')}
+    `;
+    msg.textContent = 'Erzeugung abgeschlossen.';
+  } catch (e) {
+    showError(e);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+    // === Clock HH:MM (24h)
+    const clockEl = document.getElementById('clock');
+    function updateClock(){
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      if (clockEl) clockEl.textContent = `${hh}:${mm}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    // Load auth.js dynamically (won't break page if missing)
+    let Auth = null;
+    (async () => {
+      try {
+        /* global auth.js used; session will be called below */
+      } catch (e) {
+        console.warn('auth.js (global) wird erwartet – wenn fehlt, bleibt Gast-Modus', e);
+      }
+    })();
+
+</script>
+
+
+<script>
+// Keep the header role pill in sync with auth.js + dataset role (robust version)
+(function(){
+  function labelFor(role){
+    var r = (role||'guest').toLowerCase();
+    if (r === 'admin') return 'Admin';
+    if (r === 'dirza2') return 'DirZA 2';
+    if (r === 'dirza3') return 'DirZA 3';
+    if (r === 'grenzschutz') return 'Grenzschutz';
+    return 'Gast';
+  }
+  function updateRolePill(role){
+    var ri = document.getElementById('roleIndicator');
+    if (!ri) return;
+    ri.textContent = labelFor(role);
+  }
+  function readDatasetRole(){
+    return (document.documentElement.dataset && document.documentElement.dataset.role) || 'guest';
+  }
+
+  // Initial sync from dataset
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ updateRolePill(readDatasetRole()); });
+  } else { updateRolePill(readDatasetRole()); }
+
+  // Listen for rolechange event (from auth.js)
+  document.addEventListener('rolechange', function(e){
+    var role = (e && e.detail && e.detail.role) ? e.detail.role : readDatasetRole();
+    updateRolePill(role);
+  });
+
+  // Fallback: Observe data-role changes
+  try {
+    var obs = new MutationObserver(function(muts){
+      for (var i=0;i<muts.length;i++){
+        var m = muts[i];
+        if (m.type === 'attributes' && m.attributeName === 'data-role') {
+          updateRolePill(readDatasetRole());
+        }
+      }
+    });
+    obs.observe(document.documentElement, { attributes:true, attributeFilter:['data-role'] });
+  } catch(e){}
+
+  // Poll for window.Auth if it's not ready immediately, then call session() once.
+  (function waitForAuth(maxMs){
+    var started = Date.now();
+    (function tick(){
+      if (window.Auth && typeof window.Auth.session === 'function') {
+        try {
+          window.Auth.session().then(function(s){
+            updateRolePill((s && s.role) ? s.role : readDatasetRole());
+          }).catch(function(){
+            updateRolePill(readDatasetRole());
+          });
+        } catch(e){ updateRolePill(readDatasetRole()); }
+        return;
+      }
+      if (Date.now() - started < maxMs) { setTimeout(tick, 150); } // try again
+    })();
+  })(3000);
+})();
+</script>
+
+<script>
+(function(){
+  const rolePill = document.getElementById('roleIndicator');
+  function applyRole(role){
+    var r = (role||'guest').toLowerCase();
+    document.documentElement.dataset.role = r;
+    if (rolePill) {
+      var label = 'Gast';
+      if (r === 'admin') label = 'Admin';
+      if (r === 'dirza2') label = 'DirZA 2';
+      if (r === 'dirza3') label = 'DirZA 3';
+      rolePill.textContent = label;
+    }
+  }
+  // Init session like Personalakten
+  (async function initSession(){
+    try{
+      if (window.Auth && typeof Auth.session === 'function'){
+        const s = await Auth.session();
+        applyRole(s && s.role ? s.role : 'guest');
+      } else {
+        applyRole(localStorage.getItem('role') || (document.documentElement.dataset.role || 'guest'));
+      }
+    }catch(e){
+      applyRole('guest');
+    }
+  })();
+
+  // Also keep role in sync if auth.js emits rolechange
+  document.addEventListener('rolechange', function(e){
+    var role = (e && e.detail && e.detail.role) ? e.detail.role : (document.documentElement.dataset.role || 'guest');
+    applyRole(role);
+  });
+})();
+</script>
+
+<script>
+// Minimal, safe role-based filter: hide templates with "Grenzschutz" unless role is 'admin' or 'grenzschutz'.
+(function(){
+  function role(){
+    return (document.documentElement.dataset && (document.documentElement.dataset.role||'guest')).toLowerCase();
+  }
+  function allowGrenz(){ const r = role(); return r === 'admin' || r === 'grenzschutz'; }
+  function isGrenz(name){ return (name||'').toLowerCase().includes('grenzschutz'); }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Wrap the existing renderTemplateOptions once
+    var wrapped = false;
+    var wrap = function(){
+      if (wrapped || typeof window.renderTemplateOptions !== 'function') return;
+      var orig = window.renderTemplateOptions;
+      window.renderTemplateOptions = function(items){
+        var filtered = (items||[]).filter(function(it){
+          var n = (it && it.name ? it.name : '');
+          return isGrenz(n) ? allowGrenz() : true;
+        });
+        return orig(filtered);
+      };
+      wrapped = true;
+    };
+    // try now and again after a tick (in case the original function loads later)
+    wrap(); setTimeout(wrap, 0); setTimeout(wrap, 300);
+  });
+
+  // If role changes later, retrigger a render by re-dispatching input on the search box
+  document.addEventListener('rolechange', function(){
+    var s = document.getElementById('search');
+    if (s) { s.dispatchEvent(new Event('input', { bubbles:true })); }
+  });
+})();
+</script>
+
+</body>
+</html>
