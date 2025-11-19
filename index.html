@@ -134,23 +134,26 @@
 </div>
 <div class="gov-right"><span class="clock-pill" id="roleIndicator">Gast</span> <span class="clock-pill" id="clock">--:--</span></div>
 </div>
+
 <div class="app">
 <header>
 <div class="title">🚀 GIT Projekt – Ganzheitliches Innovations &amp; Transformations Projekt</div>
 </header>
 <!-- Hero -->
 <section class="hero card pad">
-<div class="h1">Webanwendungen des Bundespolizeipräsidium Nord Köln</div>
+<div class="h1">SYSTEM OFFLINE</div>
+<div class="h3">Gerne hätte ich euch das System und die neue Datenbank weiter nutzen lassen. Aber es ist schwierig IT der Bpol zu machen, wenn man kein Teil der Bpol ist. Daher ist alles abgeschaltet. Ich werde mich nicht von einem Aufgelassenen ARSCH (NRW - Kevin) so behandeln und erpressen lassen. Ich hoffe, ihr macht weiter einen guten Job Jungs hab euch lieb.😌💕</div>
+<div class="h3">Euer Nic💕</div>
 <div class="row">
 </div>
 <div class="row">
-<!--<a class="btn" data-roles="guest admin dirza2 dirza3" href="">📂 Personalakten (Gesperrt)</a> -->
+<a class="btn" data-roles="admin dirza2 dirza3 grenzschutz" href="DirZA2-3- Personalakten.html">📂 Personalakten</a>
 <a class="btn" data-roles="admin dirza2 dirza3" href="DirZA2- Kalender.html">📰 DirZA 2 Kalender</a>
 <!-- <a class="btn" data-roles="admin dirza2 dirza3" href="">📰 DirZA 3 Kalender (Nicht Online)</a> -->
 <a class="btn" data-roles="admin dirza2 dirza3 grenzschutz" href="docfiller.html">📂 DirZA - DocFiller</a>
 <a class="btn" data-roles="admin" href="admin_only.html">🛡️ Admin</a>
 <!--<a class="btn" data-roles="guest admin dirza2 dirza3" href="#faq">❓ FAQ</a> -->
-<button class="btn-accent" data-roles="guest admin dirza2 dirza3 grenzschutz" id="loginBtn" onclick="(function(){var d=document.getElementById('loginDialog'); if(!d)return; if(d.showModal) d.showModal(); else d.setAttribute('open', '');})();">🔐 Login</button>
+<!--<button class="btn-accent" data-roles="guest admin dirza2 dirza3 grenzschutz" id="loginBtn" onclick="(function(){var d=document.getElementById('loginDialog'); if(!d)return; if(d.showModal) d.showModal(); else d.setAttribute('open', '');})();">🔐 Login</button> -->
 </div>
 </section>
 <br/>
@@ -162,7 +165,7 @@
 <div class="dot" style="background:var(--accent)"></div>
 <div>
 <div style="font-weight:700">Programmleitung</div>
-<div class="muted-text">Nic Winter • <a href="mailto:nic.wintert@bundespolizei.de">nic.winter@bundespolizei.de</a></div>
+<div class="muted-text">Nic Winter • <a href="mailto:keine@echteEmail.de">nic.winter@bundespolizei.de</a></div>
 </div>
 </div>
 </div>
@@ -376,6 +379,8 @@ Jegliche Ähnlichkeiten mit real existierenden Namen, Einrichtungen oder Ereigni
         document.documentElement.dataset.role = info.role || 'guest';
         notify(`Willkommen ${info.username} (${info.role})`);
         loginDialog.close();
+        // 🔁 Seite neu laden, damit Rollen-bedingte Inhalte sichtbar werden
+        setTimeout(()=>location.reload(), 500);
       } catch (err) {
         notify('Login fehlgeschlagen: ' + (err.message || ''));
       }
